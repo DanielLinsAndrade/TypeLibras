@@ -1,0 +1,11 @@
+PASTA_DATASET = "dataset"
+
+MODELO_WHISPER = "base"
+
+DURACAO_BLOCO = 4
+DURACAO_DNN = 2
+TAXA_AMOSTRAGEM = 16000
+
+FONTE_TITULO = ("Arial", 18, "bold")
+FONTE_NORMAL = ("Arial", 13)
+FONTE_LIBRAS = ("Sutton BR", 30)
