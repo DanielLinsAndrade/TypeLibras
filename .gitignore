@@ -16,6 +16,7 @@ venv/
 # Logs e temporários
 *.log
 *.tmp
+audio_dnn_temp.wav
 
 # Sistema operacional
 .DS_Store

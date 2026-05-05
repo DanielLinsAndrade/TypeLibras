@@ -109,14 +109,26 @@ class VozParaLibrasApp:
             font=("Arial", 14, "bold")
         ).pack(pady=5)
 
+        frame_normal = tk.Frame(self.janela)
+        frame_normal.pack(pady=5, padx=40, fill="both", expand=True)
+        
+        scroll_normal = tk.Scrollbar(frame_normal)
+        scroll_normal.pack(side="right", fill="y")
+        
         self.texto_normal = tk.Text(
-            self.janela,
+            frame_normal,
             height=8,
             width=100,
             font=FONTE_NORMAL,
-            wrap="word"
+            wrap="word",
+            yscrollcommand=scroll_normal.set,
+            padx=10,
+            pady=10
         )
-        self.texto_normal.pack(pady=5)
+        
+        self.texto_normal.pack(side="left", fill="both", expand=True)
+        
+        scroll_normal.config(command=self.texto_normal.yview)
 
         tk.Label(
             self.janela,
@@ -124,14 +136,26 @@ class VozParaLibrasApp:
             font=("Arial", 14, "bold")
         ).pack(pady=5)
 
+        frame_visual = tk.Frame(self.janela)
+        frame_visual.pack(pady=5, padx=40, fill="both", expand=True)
+
+        scroll_visual = tk.Scrollbar(frame_visual)
+        scroll_visual.pack(side="right", fill="y")
+
         self.texto_visual = tk.Text(
-            self.janela,
+            frame_visual,
             height=8,
             width=100,
             font=FONTE_LIBRAS,
-            wrap="word"
+            wrap="word",
+            yscrollcommand=scroll_visual.set,
+            padx=10,
+            pady=10
         )
-        self.texto_visual.pack(pady=5)
+
+        self.texto_visual.pack(side="left", fill="both", expand=True)
+
+        scroll_visual.config(command=self.texto_visual.yview)
 
     def carregar_audio(self):
         caminho_audio = filedialog.askopenfilename(

@@ -8,4 +8,4 @@ TAXA_AMOSTRAGEM = 16000
 
 FONTE_TITULO = ("Arial", 18, "bold")
 FONTE_NORMAL = ("Arial", 13)
-FONTE_LIBRAS = ("Sutton BR", 30)
+FONTE_LIBRAS = ("Sutton BR", 16)
