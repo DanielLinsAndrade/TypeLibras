@@ -2,7 +2,7 @@ import whisper
 
 
 class WhisperService:
-    def __init__(self, nome_modelo="turbo"):
+    def __init__(self, nome_modelo="base"):
         self.modelo = whisper.load_model(nome_modelo)
 
     def transcrever(self, caminho_audio):
