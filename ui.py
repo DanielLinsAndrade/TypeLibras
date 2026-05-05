@@ -33,6 +33,8 @@ class VozParaLibrasApp:
         self.dnn_service = DNNService(taxa_amostragem=TAXA_AMOSTRAGEM)
 
         self.ao_vivo_ativo = False
+        self.sessao_ao_vivo = 0
+        self.dnn_ativo = False
 
         self.criar_variaveis()
         self.criar_interface()
@@ -212,11 +214,19 @@ class VozParaLibrasApp:
             messagebox.showerror("Erro", str(erro))
 
     def iniciar_ao_vivo(self):
+        if self.ao_vivo_ativo:
+            return
+
         self.ao_vivo_ativo = True
+        self.sessao_ao_vivo += 1
+
+        sessao_atual = self.sessao_ao_vivo
+
         self.status_var.set("Reconhecimento ao vivo iniciado...")
-    
+
         thread = threading.Thread(
             target=self._loop_ao_vivo,
+            args=(sessao_atual,),
             daemon=True
         )
         thread.start()
@@ -225,8 +235,8 @@ class VozParaLibrasApp:
         self.texto_normal.insert(tk.END, " " + texto)
         self.texto_visual.insert(tk.END, " " + texto.upper())
     
-    def _loop_ao_vivo(self):
-        while self.ao_vivo_ativo:
+    def _loop_ao_vivo(self, sessao_atual):
+        while self.ao_vivo_ativo and sessao_atual == self.sessao_ao_vivo:
             caminho_temp = None
 
             try:
@@ -237,26 +247,44 @@ class VozParaLibrasApp:
                     TAXA_AMOSTRAGEM
                 )
 
+                if not self.ao_vivo_ativo or sessao_atual != self.sessao_ao_vivo:
+                    break
+
                 self.janela.after(0, lambda: self.status_var.set("Reconhecendo..."))
 
                 texto = self.whisper_service.transcrever(caminho_temp)
 
+                if not self.ao_vivo_ativo or sessao_atual != self.sessao_ao_vivo:
+                    break
+
                 if texto:
                     self.janela.after(
                         0,
-                        lambda t=texto: self._append_texto(t)
+                        lambda t=texto, s=sessao_atual: self._append_texto_seguro(t, s)
                     )
 
-            except Exception as erro:
+            except Exception:
                 print(traceback.format_exc())
 
             finally:
                 if caminho_temp and os.path.exists(caminho_temp):
                     os.remove(caminho_temp)
 
+        self.janela.after(0, lambda: self.status_var.set("Reconhecimento ao vivo parado."))
+
     def parar_ao_vivo(self):
         self.ao_vivo_ativo = False
+        self.sessao_ao_vivo += 1
+        self.dnn_ativo = False
+
         self.status_var.set("Reconhecimento ao vivo parado.")
+        
+    def _append_texto_seguro(self, texto, sessao_atual):
+        if not self.ao_vivo_ativo or sessao_atual != self.sessao_ao_vivo:
+            return
+
+        self.texto_normal.insert(tk.END, " " + texto)
+        self.texto_visual.insert(tk.END, " " + texto.upper())
 
     def reconhecer_bloco_ao_vivo(self):
         if not self.ao_vivo_ativo:
@@ -297,39 +325,52 @@ class VozParaLibrasApp:
             self.parar_ao_vivo()
 
     def reconhecer_microfone_dnn(self):
+        if self.dnn_ativo:
+            return
+
+        self.dnn_ativo = True
         self.status_var.set("Iniciando reconhecimento com DNN...")
 
-        thread = threading.Thread(target=self._reconhecer_microfone_dnn_thread, daemon=True)
+        thread = threading.Thread(
+            target=self._reconhecer_microfone_dnn_thread,
+            daemon=True
+        )
         thread.start()
 
 
     def _reconhecer_microfone_dnn_thread(self):
         try:
             self.janela.after(0, lambda: self.status_var.set("Gravando para DNN..."))
-
+    
             caminho_audio = "audio_dnn_temp.wav"
-
+    
             gravar_audio(
                 caminho_audio,
                 DURACAO_DNN,
                 TAXA_AMOSTRAGEM
             )
-
+    
+            if not self.dnn_ativo:
+                return
+    
             self.janela.after(0, lambda: self.status_var.set("Reconhecendo com DNN..."))
-
+    
             palavra, confianca = self.dnn_service.reconhecer(caminho_audio)
-
+    
+            if not self.dnn_ativo:
+                return
+    
             self.janela.after(
                 0,
                 lambda: self._exibir_resultado_dnn(palavra, confianca)
             )
-
+    
         except Exception as erro:
             print(traceback.format_exc())
-            self.janela.after(
-                0,
-                lambda: messagebox.showerror("Erro", str(erro))
-            )
+            self.janela.after(0, lambda: messagebox.showerror("Erro", str(erro)))
+    
+        finally:
+            self.dnn_ativo = False
 
 
     def _exibir_resultado_dnn(self, palavra, confianca):
