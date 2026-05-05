@@ -28,6 +28,9 @@ class VozParaLibrasApp:
     def __init__(self):
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
+        
+        self.modo_escuro = True
+        self.aplicar_paleta_escura()
 
         self.janela = ctk.CTk()
         self.janela.title("TalkLibras")
@@ -41,14 +44,6 @@ class VozParaLibrasApp:
         self.ao_vivo_ativo = False
         self.sessao_ao_vivo = 0
         self.dnn_ativo = False
-
-        self.cor_fundo = "#08111f"
-        self.cor_card = "#111b2a"
-        self.cor_card_2 = "#141f30"
-        self.cor_borda = "#26384f"
-        self.cor_texto = "#f4f7fb"
-        self.cor_texto_secundario = "#aeb8c8"
-        self.cor_destaque = "#35e0c0"
 
         self.carregar_icones()
         self.criar_variaveis()
@@ -124,6 +119,21 @@ class VozParaLibrasApp:
         )
         titulo.pack(anchor="w")
 
+        self.botao_tema = ctk.CTkButton(
+            header,
+            text="Modo claro",
+            font=("Segoe UI", 13, "bold"),
+            fg_color="#182538",
+            hover_color="#22324a",
+            border_width=1,
+            border_color=self.cor_destaque,
+            corner_radius=10,
+            width=130,
+            height=36,
+            command=self.alternar_tema
+        )
+        self.botao_tema.pack(side="right", padx=(20, 0))
+        
         subtitulo = ctk.CTkLabel(
             textos,
             text="Reconhecimento de fala com Whisper e DNN para representação visual em Libras",
@@ -204,7 +214,10 @@ class VozParaLibrasApp:
             comando=self.limpar_texto
         ).pack(side="left", fill="x", expand=True, padx=6)
 
-    def misturar_cor(self, cor_hex, fundo_hex="#182538", intensidade=0.16):
+    def misturar_cor(self, cor_hex, fundo_hex=None, intensidade=0.16):
+        if fundo_hex is None:
+            fundo_hex = self.cor_botao_base
+                
         cor_hex = cor_hex.lstrip("#")
         fundo_hex = fundo_hex.lstrip("#")
 
@@ -218,9 +231,9 @@ class VozParaLibrasApp:
         return f"#{r:02x}{g:02x}{b:02x}"
     
     def criar_botao_card(self, parent, texto, icone, cor, comando):
-       cor_fundo_suave = self.misturar_cor(cor, "#182538", 0.18)
-       cor_hover = self.misturar_cor(cor, "#22324a", 0.28)
-    
+       cor_fundo_suave = self.misturar_cor(cor, self.cor_botao_base, 0.18)
+       cor_hover = self.misturar_cor(cor, self.cor_botao_hover, 0.28)
+
        return ctk.CTkButton(
            parent,
            text=texto,
@@ -236,6 +249,38 @@ class VozParaLibrasApp:
            height=100,
            command=comando
        )
+
+    def alternar_tema(self):
+        texto_normal = self.texto_normal.get("1.0", tk.END).strip()
+        texto_visual = self.texto_visual.get("1.0", tk.END).strip()
+
+        resultado_atual = self.resultado_var.get()
+
+        for widget in self.janela.winfo_children():
+            widget.destroy()
+
+        if self.modo_escuro:
+            ctk.set_appearance_mode("light")
+            self.aplicar_paleta_clara()
+            texto_botao = "Modo noturno"
+            novo_status = "Modo claro ativado."
+        else:
+            ctk.set_appearance_mode("dark")
+            self.aplicar_paleta_escura()
+            texto_botao = "Modo claro"
+            novo_status = "Modo noturno ativado."
+
+        self.criar_interface()
+
+        self.texto_normal.delete("1.0", tk.END)
+        self.texto_normal.insert("1.0", texto_normal)
+
+        self.texto_visual.delete("1.0", tk.END)
+        self.texto_visual.insert("1.0", texto_visual)
+
+        self.resultado_var.set(resultado_atual)
+        self.status_var.set(novo_status)
+        self.botao_tema.configure(text=texto_botao)
 
     def criar_area_status(self):
         status_card = ctk.CTkFrame(
@@ -301,7 +346,7 @@ class VozParaLibrasApp:
             card_texto,
             font=("Segoe UI", 15),
             text_color=self.cor_texto,
-            fg_color="#091525",
+            fg_color=self.cor_campo_texto,
             border_width=1,
             border_color="#31435d",
             corner_radius=12,
@@ -321,7 +366,7 @@ class VozParaLibrasApp:
             card_visual,
             font=FONTE_LIBRAS,
             text_color=self.cor_texto,
-            fg_color="#091525",
+            fg_color=self.cor_campo_texto,
             border_width=1,
             border_color="#31435d",
             corner_radius=12,
@@ -630,6 +675,35 @@ class VozParaLibrasApp:
         else:
             self.botao_dnn.configure(state="disabled")
             self.resultado_var.set("Modelo DNN não encontrado. Treine a DNN primeiro.")
+
+    def aplicar_paleta_escura(self):
+        self.modo_escuro = True
+
+        self.cor_fundo = "#08111f"
+        self.cor_card = "#111b2a"
+        self.cor_card_2 = "#141f30"
+        self.cor_borda = "#26384f"
+        self.cor_texto = "#f4f7fb"
+        self.cor_texto_secundario = "#aeb8c8"
+        self.cor_destaque = "#35e0c0"
+        self.cor_campo_texto = "#091525"
+        self.cor_botao_base = "#182538"
+        self.cor_botao_hover = "#22324a"
+
+
+    def aplicar_paleta_clara(self):
+        self.modo_escuro = False
+    
+        self.cor_fundo = "#eef3f8"
+        self.cor_card = "#ffffff"
+        self.cor_card_2 = "#f8fafc"
+        self.cor_borda = "#cbd5e1"
+        self.cor_texto = "#0f172a"
+        self.cor_texto_secundario = "#475569"
+        self.cor_destaque = "#0f766e"
+        self.cor_campo_texto = "#ffffff"
+        self.cor_botao_base = "#f1f5f9"
+        self.cor_botao_hover = "#e2e8f0"
 
     def treinar_dnn(self):
         self.botao_treinar_dnn.configure(state="disabled")
