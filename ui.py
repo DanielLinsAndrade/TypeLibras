@@ -214,7 +214,45 @@ class VozParaLibrasApp:
     def iniciar_ao_vivo(self):
         self.ao_vivo_ativo = True
         self.status_var.set("Reconhecimento ao vivo iniciado...")
-        self.janela.after(100, self.reconhecer_bloco_ao_vivo)
+    
+        thread = threading.Thread(
+            target=self._loop_ao_vivo,
+            daemon=True
+        )
+        thread.start()
+    
+    def _append_texto(self, texto):
+        self.texto_normal.insert(tk.END, " " + texto)
+        self.texto_visual.insert(tk.END, " " + texto.upper())
+    
+    def _loop_ao_vivo(self):
+        while self.ao_vivo_ativo:
+            caminho_temp = None
+
+            try:
+                self.janela.after(0, lambda: self.status_var.set("Ouvindo..."))
+
+                caminho_temp = gravar_audio_temporario(
+                    DURACAO_BLOCO,
+                    TAXA_AMOSTRAGEM
+                )
+
+                self.janela.after(0, lambda: self.status_var.set("Reconhecendo..."))
+
+                texto = self.whisper_service.transcrever(caminho_temp)
+
+                if texto:
+                    self.janela.after(
+                        0,
+                        lambda t=texto: self._append_texto(t)
+                    )
+
+            except Exception as erro:
+                print(traceback.format_exc())
+
+            finally:
+                if caminho_temp and os.path.exists(caminho_temp):
+                    os.remove(caminho_temp)
 
     def parar_ao_vivo(self):
         self.ao_vivo_ativo = False
