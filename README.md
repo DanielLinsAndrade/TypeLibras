@@ -42,6 +42,9 @@ TalkLibras/
 │   ├── libras/
 │   └── obrigado/
 │
+├── icons/
+│   └── (ícones do projeto)
+│
 ├── app.py
 ├── config.py
 ├── ui.py
