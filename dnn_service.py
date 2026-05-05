@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import librosa
 import joblib
@@ -14,11 +15,30 @@ class DNNService:
         taxa_amostragem=16000,
         n_mfcc=40
     ):
-        self.modelo = load_model(caminho_modelo)
-        self.label_encoder = joblib.load(caminho_label_encoder)
-        self.scaler = joblib.load(caminho_scaler)
+        self.caminho_modelo = caminho_modelo
+        self.caminho_label_encoder = caminho_label_encoder
+        self.caminho_scaler = caminho_scaler
         self.taxa_amostragem = taxa_amostragem
         self.n_mfcc = n_mfcc
+
+        self.modelo = None
+        self.label_encoder = None
+        self.scaler = None
+
+        if self.modelo_disponivel():
+            self.carregar_modelo()
+
+    def modelo_disponivel(self):
+        return (
+            os.path.exists(self.caminho_modelo)
+            and os.path.exists(self.caminho_label_encoder)
+            and os.path.exists(self.caminho_scaler)
+        )
+
+    def carregar_modelo(self):
+        self.modelo = load_model(self.caminho_modelo)
+        self.label_encoder = joblib.load(self.caminho_label_encoder)
+        self.scaler = joblib.load(self.caminho_scaler)
 
     def extrair_mfcc(self, caminho_audio):
         audio, sr = librosa.load(caminho_audio, sr=self.taxa_amostragem)
@@ -32,6 +52,9 @@ class DNNService:
         return np.mean(mfcc.T, axis=0)
 
     def reconhecer(self, caminho_audio):
+        if self.modelo is None:
+            raise RuntimeError("Modelo DNN não carregado. Treine a DNN primeiro.")
+
         caracteristicas = self.extrair_mfcc(caminho_audio)
         caracteristicas = np.array([caracteristicas])
         caracteristicas = self.scaler.transform(caracteristicas)

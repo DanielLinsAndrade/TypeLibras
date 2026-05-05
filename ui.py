@@ -2,6 +2,9 @@ import os
 import traceback
 import tkinter as tk
 from tkinter import filedialog, messagebox
+import threading
+import subprocess
+import sys
 
 from config import (
     PASTA_DATASET,
@@ -73,14 +76,27 @@ class VozParaLibrasApp:
             height=2
         ).pack(pady=5)
 
-        tk.Button(
+        self.botao_treinar_dnn = tk.Button(
+            self.janela,
+            text="Treinar DNN",
+            font=("Arial", 14),
+            command=self.treinar_dnn,
+            width=30,
+            height=2
+        )
+        self.botao_treinar_dnn.pack(pady=5)
+
+        self.botao_dnn = tk.Button(
             self.janela,
             text="Reconhecer com DNN",
             font=("Arial", 14),
             command=self.reconhecer_microfone_dnn,
             width=30,
             height=2
-        ).pack(pady=5)
+        )
+        self.botao_dnn.pack(pady=5)
+
+        self.atualizar_estado_dnn()
 
         tk.Button(
             self.janela,
@@ -243,9 +259,15 @@ class VozParaLibrasApp:
             self.parar_ao_vivo()
 
     def reconhecer_microfone_dnn(self):
+        self.status_var.set("Iniciando reconhecimento com DNN...")
+
+        thread = threading.Thread(target=self._reconhecer_microfone_dnn_thread, daemon=True)
+        thread.start()
+
+
+    def _reconhecer_microfone_dnn_thread(self):
         try:
-            self.status_var.set("Gravando para DNN...")
-            self.janela.update()
+            self.janela.after(0, lambda: self.status_var.set("Gravando para DNN..."))
 
             caminho_audio = "audio_dnn_temp.wav"
 
@@ -255,26 +277,32 @@ class VozParaLibrasApp:
                 TAXA_AMOSTRAGEM
             )
 
-            self.status_var.set("Reconhecendo com DNN...")
-            self.janela.update()
+            self.janela.after(0, lambda: self.status_var.set("Reconhecendo com DNN..."))
 
             palavra, confianca = self.dnn_service.reconhecer(caminho_audio)
 
-            self.texto_normal.delete("1.0", tk.END)
-            self.texto_normal.insert(
-                tk.END,
-                f"{palavra.upper()} | Confiança: {confianca:.2f}"
+            self.janela.after(
+                0,
+                lambda: self._exibir_resultado_dnn(palavra, confianca)
             )
-
-            self.texto_visual.delete("1.0", tk.END)
-            self.texto_visual.insert(tk.END, palavra.upper())
-
-            self.resultado_var.set("Modo DNN: reconhecimento por classe treinada.")
-            self.status_var.set("Reconhecimento DNN finalizado.")
 
         except Exception as erro:
             print(traceback.format_exc())
-            messagebox.showerror("Erro", str(erro))
+            self.janela.after(
+                0,
+                lambda: messagebox.showerror("Erro", str(erro))
+            )
+
+
+    def _exibir_resultado_dnn(self, palavra, confianca):
+        self.texto_normal.delete("1.0", tk.END)
+        self.texto_normal.insert(tk.END, f"{palavra.upper()} | Confiança: {confianca:.2f}")
+
+        self.texto_visual.delete("1.0", tk.END)
+        self.texto_visual.insert(tk.END, palavra.upper())
+
+        self.resultado_var.set("Modo DNN: reconhecimento por classe treinada.")
+        self.status_var.set("Reconhecimento DNN finalizado.")
 
     def limpar_texto(self):
         self.texto_normal.delete("1.0", tk.END)
@@ -284,3 +312,54 @@ class VozParaLibrasApp:
 
     def executar(self):
         self.janela.mainloop()
+        
+    def atualizar_estado_dnn(self):
+        if self.dnn_service.modelo_disponivel():
+            self.botao_dnn.config(state="normal")
+            self.resultado_var.set("Modelo DNN disponível.")
+        else:
+            self.botao_dnn.config(state="disabled")
+            self.resultado_var.set("Modelo DNN não encontrado. Treine a DNN primeiro.")
+
+
+    def treinar_dnn(self):
+        self.botao_treinar_dnn.config(state="disabled")
+        self.botao_dnn.config(state="disabled")
+        self.status_var.set("Treinando DNN... Isso pode demorar.")
+
+        thread = threading.Thread(target=self._treinar_dnn_thread, daemon=True)
+        thread.start()
+
+
+    def _treinar_dnn_thread(self):
+        try:
+            resultado = subprocess.run(
+                [sys.executable, "treinar_dnn.py"],
+                capture_output=True,
+                text=True
+            )
+
+            if resultado.returncode != 0:
+                self.janela.after(
+                    0,
+                    lambda: messagebox.showerror("Erro no treino", resultado.stderr)
+                )
+                return
+
+            self.dnn_service.carregar_modelo()
+
+            self.janela.after(0, self._finalizar_treino_dnn)
+
+        except Exception as erro:
+            print(traceback.format_exc())
+            self.janela.after(
+                0,
+                lambda: messagebox.showerror("Erro", str(erro))
+            )
+
+
+    def _finalizar_treino_dnn(self):
+        self.botao_treinar_dnn.config(state="normal")
+        self.botao_dnn.config(state="normal")
+        self.status_var.set("Treinamento da DNN finalizado.")
+        self.resultado_var.set("Modelo DNN treinado e carregado.")
