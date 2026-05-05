@@ -240,7 +240,7 @@ class VozParaLibrasApp:
            image=icone,
            compound="left",
            font=("Segoe UI", 15, "bold"),
-           text_color="#ffffff",
+           text_color=self.cor_texto_botao,
            fg_color=cor_fundo_suave,
            hover_color=cor_hover,
            border_width=1,
@@ -689,6 +689,7 @@ class VozParaLibrasApp:
         self.cor_campo_texto = "#091525"
         self.cor_botao_base = "#182538"
         self.cor_botao_hover = "#22324a"
+        self.cor_texto_botao = "#ffffff"
 
 
     def aplicar_paleta_clara(self):
@@ -704,6 +705,7 @@ class VozParaLibrasApp:
         self.cor_campo_texto = "#ffffff"
         self.cor_botao_base = "#f1f5f9"
         self.cor_botao_hover = "#e2e8f0"
+        self.cor_texto_botao = "#0f172a"
 
     def treinar_dnn(self):
         self.botao_treinar_dnn.configure(state="disabled")
