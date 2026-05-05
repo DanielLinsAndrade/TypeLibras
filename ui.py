@@ -1,10 +1,13 @@
 import os
+import sys
 import traceback
-import tkinter as tk
-from tkinter import filedialog, messagebox
 import threading
 import subprocess
-import sys
+import tkinter as tk
+from tkinter import filedialog, messagebox
+
+from PIL import Image
+import customtkinter as ctk
 
 from config import (
     PASTA_DATASET,
@@ -12,8 +15,6 @@ from config import (
     DURACAO_BLOCO,
     DURACAO_DNN,
     TAXA_AMOSTRAGEM,
-    FONTE_TITULO,
-    FONTE_NORMAL,
     FONTE_LIBRAS
 )
 
@@ -25,9 +26,14 @@ from evaluation import comparar_com_transcricao
 
 class VozParaLibrasApp:
     def __init__(self):
-        self.janela = tk.Tk()
-        self.janela.title("Protótipo Voz para Libras Escrita")
-        self.janela.geometry("1000x850")
+        ctk.set_appearance_mode("dark")
+        ctk.set_default_color_theme("blue")
+
+        self.janela = ctk.CTk()
+        self.janela.title("TalkLibras")
+        self.definir_icone_janela()
+        self.janela.geometry("1280x900")
+        self.janela.minsize(1100, 720)
 
         self.whisper_service = WhisperService(MODELO_WHISPER)
         self.dnn_service = DNNService(taxa_amostragem=TAXA_AMOSTRAGEM)
@@ -36,144 +42,405 @@ class VozParaLibrasApp:
         self.sessao_ao_vivo = 0
         self.dnn_ativo = False
 
+        self.cor_fundo = "#08111f"
+        self.cor_card = "#111b2a"
+        self.cor_card_2 = "#141f30"
+        self.cor_borda = "#26384f"
+        self.cor_texto = "#f4f7fb"
+        self.cor_texto_secundario = "#aeb8c8"
+        self.cor_destaque = "#35e0c0"
+
+        self.carregar_icones()
         self.criar_variaveis()
         self.criar_interface()
 
     def criar_variaveis(self):
-        self.status_var = tk.StringVar(value="Selecione um áudio para iniciar.")
+        self.status_var = tk.StringVar(value="aguardando ação...")
         self.resultado_var = tk.StringVar(value="")
 
+    def carregar_icone(self, nome, tamanho=(30, 30)):
+        caminho_base = os.path.dirname(os.path.abspath(__file__))
+        caminho = os.path.join(caminho_base, "icons", nome)
+
+        imagem = Image.open(caminho)
+        return ctk.CTkImage(light_image=imagem, dark_image=imagem, size=tamanho)
+
+    def carregar_icones(self):
+        self.icon_folder = self.carregar_icone("folder.png", (42, 39))
+        self.icon_mic = self.carregar_icone("mic.png", (36, 42))
+        self.icon_pause = self.carregar_icone("pause.png", (42, 42))
+        self.icon_brain = self.carregar_icone("neural.png", (42, 42))
+        self.icon_train = self.carregar_icone("study.png", (50, 42))
+        self.icon_clean = self.carregar_icone("cleaning.png", (42, 42))
+
+        self.icon_hand = self.carregar_icone("hand.png", (30, 30))
+        self.icon_clock = self.carregar_icone("clock.png", (17, 20))
+        self.icon_wave = self.carregar_icone("wave.png", (22, 22))
+        self.icon_logo = self.carregar_icone("logo.png", (120, 110))
+        
+        
+
     def criar_interface(self):
-        titulo = tk.Label(
+        self.janela.configure(fg_color=self.cor_fundo)
+
+        self.container = ctk.CTkFrame(
             self.janela,
-            text="Conversor de Voz para Libras Escrita",
-            font=FONTE_TITULO
+            fg_color=self.cor_card,
+            corner_radius=18,
+            border_width=1,
+            border_color="#1b2a3e"
         )
-        titulo.pack(pady=15)
+        self.container.pack(fill="both", expand=True, padx=18, pady=18)
 
-        tk.Button(
-            self.janela,
-            text="Selecionar áudio da base",
-            font=("Arial", 14),
-            command=self.carregar_audio,
-            width=30,
-            height=2
-        ).pack(pady=5)
-
-        tk.Button(
-            self.janela,
-            text="Iniciar reconhecimento ao vivo",
-            font=("Arial", 14),
-            command=self.iniciar_ao_vivo,
-            width=30,
-            height=2
-        ).pack(pady=5)
-
-        tk.Button(
-            self.janela,
-            text="Parar reconhecimento",
-            font=("Arial", 14),
-            command=self.parar_ao_vivo,
-            width=30,
-            height=2
-        ).pack(pady=5)
-
-        self.botao_treinar_dnn = tk.Button(
-            self.janela,
-            text="Treinar DNN",
-            font=("Arial", 14),
-            command=self.treinar_dnn,
-            width=30,
-            height=2
-        )
-        self.botao_treinar_dnn.pack(pady=5)
-
-        self.botao_dnn = tk.Button(
-            self.janela,
-            text="Reconhecer com DNN",
-            font=("Arial", 14),
-            command=self.reconhecer_microfone_dnn,
-            width=30,
-            height=2
-        )
-        self.botao_dnn.pack(pady=5)
+        self.criar_cabecalho()
+        self.criar_area_acoes()
+        self.criar_area_status()
+        self.criar_area_textos()
+        self.criar_rodape()
 
         self.atualizar_estado_dnn()
 
-        tk.Button(
-            self.janela,
-            text="Limpar texto",
-            font=("Arial", 14),
-            command=self.limpar_texto,
-            width=30,
-            height=2
-        ).pack(pady=5)
+    def criar_cabecalho(self):
+        header = ctk.CTkFrame(self.container, fg_color="transparent")
+        header.pack(fill="x", padx=48, pady=(28, 18))
 
-        tk.Label(
-            self.janela,
+        icone = ctk.CTkLabel(
+            header,
+            image=self.icon_logo,
+            text="",
+            width=130
+        )
+        icone.pack(side="left", padx=(0, 30))
+
+        textos = ctk.CTkFrame(header, fg_color="transparent")
+        textos.pack(side="left", fill="x", expand=True)
+
+        titulo = ctk.CTkLabel(
+            textos,
+            text="Conversor de Voz para Libras Escrita",
+            font=("Segoe UI", 34, "bold"),
+            text_color=self.cor_texto,
+            anchor="w"
+        )
+        titulo.pack(anchor="w")
+
+        subtitulo = ctk.CTkLabel(
+            textos,
+            text="Reconhecimento de fala com Whisper e DNN para representação visual em Libras",
+            font=("Segoe UI", 17),
+            text_color=self.cor_texto_secundario,
+            anchor="w"
+        )
+        subtitulo.pack(anchor="w", pady=(8, 0))
+
+    def criar_area_acoes(self):
+        card_acoes = ctk.CTkFrame(
+            self.container,
+            fg_color=self.cor_card_2,
+            corner_radius=16,
+            border_width=1,
+            border_color=self.cor_borda
+        )
+        card_acoes.pack(fill="x", padx=30, pady=(0, 18))
+
+        titulo_acoes = ctk.CTkLabel(
+            card_acoes,
+            text="⚡ Ações",
+            font=("Segoe UI", 18, "bold"),
+            text_color=self.cor_destaque
+        )
+        titulo_acoes.pack(anchor="w", padx=24, pady=(18, 8))
+
+        botoes = ctk.CTkFrame(card_acoes, fg_color="transparent")
+        botoes.pack(fill="x", padx=20, pady=(8, 20))
+
+        self.criar_botao_card(
+            botoes,
+            texto="Selecionar áudio\nda base",
+            icone=self.icon_folder,
+            cor="#2d8cff",
+            comando=self.carregar_audio
+        ).pack(side="left", fill="x", expand=True, padx=6)
+
+        self.criar_botao_card(
+            botoes,
+            texto="Iniciar\nreconhecimento\nao vivo",
+            icone=self.icon_mic,
+            cor="#34d399",
+            comando=self.iniciar_ao_vivo
+        ).pack(side="left", fill="x", expand=True, padx=6)
+
+        self.criar_botao_card(
+            botoes,
+            texto="Parar\nreconhecimento",
+            icone=self.icon_pause,
+            cor="#ff5b5b",
+            comando=self.parar_ao_vivo
+        ).pack(side="left", fill="x", expand=True, padx=6)
+
+        self.botao_dnn = self.criar_botao_card(
+            botoes,
+            texto="Reconhecer\ncom DNN",
+            icone=self.icon_brain,
+            cor="#8b5cf6",
+            comando=self.reconhecer_microfone_dnn
+        )
+        self.botao_dnn.pack(side="left", fill="x", expand=True, padx=6)
+
+        self.botao_treinar_dnn = self.criar_botao_card(
+            botoes,
+            texto="Treinar\nDNN",
+            icone=self.icon_train,
+            cor="#fbbf24",
+            comando=self.treinar_dnn
+        )
+        self.botao_treinar_dnn.pack(side="left", fill="x", expand=True, padx=6)
+
+        self.criar_botao_card(
+            botoes,
+            texto="Limpar\ntexto",
+            icone=self.icon_clean,
+            cor="#94a3b8",
+            comando=self.limpar_texto
+        ).pack(side="left", fill="x", expand=True, padx=6)
+
+    def misturar_cor(self, cor_hex, fundo_hex="#182538", intensidade=0.16):
+        cor_hex = cor_hex.lstrip("#")
+        fundo_hex = fundo_hex.lstrip("#")
+
+        r1, g1, b1 = int(cor_hex[0:2], 16), int(cor_hex[2:4], 16), int(cor_hex[4:6], 16)
+        r2, g2, b2 = int(fundo_hex[0:2], 16), int(fundo_hex[2:4], 16), int(fundo_hex[4:6], 16)
+
+        r = int(r2 + (r1 - r2) * intensidade)
+        g = int(g2 + (g1 - g2) * intensidade)
+        b = int(b2 + (b1 - b2) * intensidade)
+
+        return f"#{r:02x}{g:02x}{b:02x}"
+    
+    def criar_botao_card(self, parent, texto, icone, cor, comando):
+       cor_fundo_suave = self.misturar_cor(cor, "#182538", 0.18)
+       cor_hover = self.misturar_cor(cor, "#22324a", 0.28)
+    
+       return ctk.CTkButton(
+           parent,
+           text=texto,
+           image=icone,
+           compound="left",
+           font=("Segoe UI", 15, "bold"),
+           text_color="#ffffff",
+           fg_color=cor_fundo_suave,
+           hover_color=cor_hover,
+           border_width=1,
+           border_color=cor,
+           corner_radius=12,
+           height=100,
+           command=comando
+       )
+
+    def criar_area_status(self):
+        status_card = ctk.CTkFrame(
+            self.container,
+            fg_color=self.cor_card_2,
+            corner_radius=14,
+            border_width=1,
+            border_color=self.cor_borda
+        )
+        status_card.pack(fill="x", padx=30, pady=(0, 18))
+
+        linha = ctk.CTkFrame(status_card, fg_color="transparent")
+        linha.pack(fill="x", padx=22, pady=14)
+
+        bolinha = ctk.CTkLabel(
+            linha,
+            text="●",
+            font=("Segoe UI", 24),
+            text_color=self.cor_destaque
+        )
+        bolinha.pack(side="left", padx=(0, 12))
+
+        label_status = ctk.CTkLabel(
+            linha,
+            text="Status:",
+            font=("Segoe UI", 16, "bold"),
+            text_color=self.cor_destaque
+        )
+        label_status.pack(side="left")
+
+        valor_status = ctk.CTkLabel(
+            linha,
             textvariable=self.status_var,
-            font=("Arial", 11)
-        ).pack(pady=5)
+            font=("Segoe UI", 16),
+            text_color=self.cor_texto
+        )
+        valor_status.pack(side="left", padx=(10, 0))
 
-        tk.Label(
-            self.janela,
+        valor_resultado = ctk.CTkLabel(
+            linha,
             textvariable=self.resultado_var,
-            font=("Arial", 11)
-        ).pack(pady=5)
-
-        tk.Label(
-            self.janela,
-            text="Texto reconhecido:",
-            font=("Arial", 14, "bold")
-        ).pack(pady=5)
-
-        frame_normal = tk.Frame(self.janela)
-        frame_normal.pack(pady=5, padx=40, fill="both", expand=True)
-        
-        scroll_normal = tk.Scrollbar(frame_normal)
-        scroll_normal.pack(side="right", fill="y")
-        
-        self.texto_normal = tk.Text(
-            frame_normal,
-            height=8,
-            width=100,
-            font=FONTE_NORMAL,
-            wrap="word",
-            yscrollcommand=scroll_normal.set,
-            padx=10,
-            pady=10
+            font=("Segoe UI", 13),
+            text_color=self.cor_texto_secundario
         )
-        
-        self.texto_normal.pack(side="left", fill="both", expand=True)
-        
-        scroll_normal.config(command=self.texto_normal.yview)
+        valor_resultado.pack(side="right")
 
-        tk.Label(
-            self.janela,
-            text="Representação visual:",
-            font=("Arial", 14, "bold")
-        ).pack(pady=5)
+    def criar_area_textos(self):
+        area = ctk.CTkFrame(self.container, fg_color="transparent")
+        area.pack(fill="both", expand=True, padx=30, pady=(8, 18))
 
-        frame_visual = tk.Frame(self.janela)
-        frame_visual.pack(pady=5, padx=40, fill="both", expand=True)
+        area.grid_columnconfigure(0, weight=1)
+        area.grid_columnconfigure(1, weight=1)
+        area.grid_rowconfigure(0, weight=1)
 
-        scroll_visual = tk.Scrollbar(frame_visual)
-        scroll_visual.pack(side="right", fill="y")
+        card_texto = self.criar_card_texto(
+            area,
+            titulo="Texto reconhecido",
+            icone=self.icon_wave,
+            coluna=0
+        )
 
-        self.texto_visual = tk.Text(
-            frame_visual,
-            height=8,
-            width=100,
+        self.texto_normal = ctk.CTkTextbox(
+            card_texto,
+            font=("Segoe UI", 15),
+            text_color=self.cor_texto,
+            fg_color="#091525",
+            border_width=1,
+            border_color="#31435d",
+            corner_radius=12,
+            wrap="word"
+        )
+        self.texto_normal.pack(fill="both", expand=True, padx=18, pady=(8, 18))
+        self.texto_normal.insert("1.0", "O texto reconhecido aparecerá aqui...")
+
+        card_visual = self.criar_card_texto(
+            area,
+            titulo="Representação visual (Libras)",
+            icone=self.icon_hand,
+            coluna=1
+        )
+
+        self.texto_visual = ctk.CTkTextbox(
+            card_visual,
             font=FONTE_LIBRAS,
-            wrap="word",
-            yscrollcommand=scroll_visual.set,
-            padx=10,
-            pady=10
+            text_color=self.cor_texto,
+            fg_color="#091525",
+            border_width=1,
+            border_color="#31435d",
+            corner_radius=12,
+            wrap="word"
+        )
+        self.texto_visual.pack(fill="both", expand=True, padx=18, pady=(8, 18))
+        self.texto_visual.insert("1.0", "A representação em Libras aparecerá aqui...")
+
+    def criar_card_texto(self, parent, titulo, icone, coluna):
+        card = ctk.CTkFrame(
+            parent,
+            fg_color=self.cor_card_2,
+            corner_radius=16,
+            border_width=1,
+            border_color=self.cor_borda
+        )
+        card.grid(
+            row=0,
+            column=coluna,
+            sticky="nsew",
+            padx=(0, 10) if coluna == 0 else (10, 0)
         )
 
-        self.texto_visual.pack(side="left", fill="both", expand=True)
+        header = ctk.CTkFrame(card, fg_color="transparent")
+        header.pack(anchor="w", padx=20, pady=(18, 8))
 
-        scroll_visual.config(command=self.texto_visual.yview)
+        ctk.CTkLabel(
+            header,
+            image=icone,
+            text=""
+        ).pack(side="left", padx=(0, 10))
+
+        ctk.CTkLabel(
+            header,
+            text=titulo,
+            font=("Segoe UI", 18, "bold"),
+            text_color=self.cor_texto
+        ).pack(side="left")
+
+        return card
+
+    def criar_rodape(self):
+        footer = ctk.CTkFrame(
+            self.container,
+            fg_color=self.cor_card_2,
+            corner_radius=14,
+            border_width=1,
+            border_color=self.cor_borda,
+            height=70
+        )
+        footer.pack(fill="x", padx=30, pady=(0, 16))
+        footer.pack_propagate(False)
+
+        footer.grid_columnconfigure(0, weight=1)
+        footer.grid_columnconfigure(1, weight=1)
+        footer.grid_columnconfigure(2, weight=1)
+
+        item1 = ctk.CTkFrame(footer, fg_color="transparent")
+        item1.grid(row=0, column=0, sticky="w", padx=24, pady=10)
+
+        ctk.CTkLabel(
+            item1,
+            image=self.icon_wave,
+            text=""
+        ).pack(side="left", padx=(0, 12))
+
+        ctk.CTkLabel(
+            item1,
+            text="Modelo Whisper:",
+            font=("Segoe UI", 12),
+            text_color=self.cor_texto
+        ).pack(side="left")
+
+        ctk.CTkLabel(
+            item1,
+            text=f"  {MODELO_WHISPER}",
+            font=("Segoe UI", 12, "bold"),
+            text_color=self.cor_destaque
+        ).pack(side="left")
+
+        item2 = ctk.CTkFrame(footer, fg_color="transparent")
+        item2.grid(row=0, column=1, sticky="n", padx=24, pady=10)
+
+        ctk.CTkLabel(
+            item2,
+            image=self.icon_clock,
+            text=""
+        ).pack(side="left", padx=(0, 12))
+
+        ctk.CTkLabel(
+            item2,
+            text="Duração do bloco:",
+            font=("Segoe UI", 14),
+            text_color=self.cor_texto
+        ).pack(side="left")
+
+        ctk.CTkLabel(
+            item2,
+            text=f"  {DURACAO_BLOCO} segundos",
+            font=("Segoe UI", 14, "bold"),
+            text_color=self.cor_destaque
+        ).pack(side="left")
+
+        item3 = ctk.CTkFrame(footer, fg_color="transparent")
+        item3.grid(row=0, column=2, sticky="e", padx=24, pady=10)
+
+        ctk.CTkLabel(
+            item3,
+            text="↗",
+            font=("Segoe UI", 18, "bold"),
+            text_color=self.cor_destaque
+        ).pack(side="left", padx=(0, 10))
+
+        ctk.CTkLabel(
+            item3,
+            text="Sistema pronto",
+            font=("Segoe UI", 14, "bold"),
+            text_color=self.cor_destaque
+        ).pack(side="left")
 
     def carregar_audio(self):
         caminho_audio = filedialog.askopenfilename(
@@ -184,6 +451,16 @@ class VozParaLibrasApp:
 
         if caminho_audio:
             self.reconhecer_audio_whisper(caminho_audio)
+
+    def limpar_placeholder(self):
+        texto_normal = self.texto_normal.get("1.0", tk.END).strip()
+        texto_visual = self.texto_visual.get("1.0", tk.END).strip()
+
+        if texto_normal == "O texto reconhecido aparecerá aqui...":
+            self.texto_normal.delete("1.0", tk.END)
+
+        if texto_visual == "A representação em Libras aparecerá aqui...":
+            self.texto_visual.delete("1.0", tk.END)
 
     def reconhecer_audio_whisper(self, caminho_audio):
         try:
@@ -217,11 +494,12 @@ class VozParaLibrasApp:
         if self.ao_vivo_ativo:
             return
 
+        self.limpar_placeholder()
+
         self.ao_vivo_ativo = True
         self.sessao_ao_vivo += 1
 
         sessao_atual = self.sessao_ao_vivo
-
         self.status_var.set("Reconhecimento ao vivo iniciado...")
 
         thread = threading.Thread(
@@ -230,11 +508,7 @@ class VozParaLibrasApp:
             daemon=True
         )
         thread.start()
-    
-    def _append_texto(self, texto):
-        self.texto_normal.insert(tk.END, " " + texto)
-        self.texto_visual.insert(tk.END, " " + texto.upper())
-    
+
     def _loop_ao_vivo(self, sessao_atual):
         while self.ao_vivo_ativo and sessao_atual == self.sessao_ao_vivo:
             caminho_temp = None
@@ -276,53 +550,15 @@ class VozParaLibrasApp:
         self.ao_vivo_ativo = False
         self.sessao_ao_vivo += 1
         self.dnn_ativo = False
-
         self.status_var.set("Reconhecimento ao vivo parado.")
-        
+
     def _append_texto_seguro(self, texto, sessao_atual):
         if not self.ao_vivo_ativo or sessao_atual != self.sessao_ao_vivo:
             return
 
+        self.limpar_placeholder()
         self.texto_normal.insert(tk.END, " " + texto)
         self.texto_visual.insert(tk.END, " " + texto.upper())
-
-    def reconhecer_bloco_ao_vivo(self):
-        if not self.ao_vivo_ativo:
-            return
-
-        caminho_temp = None
-
-        try:
-            self.status_var.set("Ouvindo...")
-            self.janela.update()
-
-            caminho_temp = gravar_audio_temporario(
-                DURACAO_BLOCO,
-                TAXA_AMOSTRAGEM
-            )
-
-            self.status_var.set("Reconhecendo trecho...")
-            self.janela.update()
-
-            texto_reconhecido = self.whisper_service.transcrever(caminho_temp)
-
-            if texto_reconhecido:
-                self.texto_normal.insert(tk.END, " " + texto_reconhecido)
-                self.texto_visual.insert(tk.END, " " + texto_reconhecido.upper())
-
-            if caminho_temp and os.path.exists(caminho_temp):
-                os.remove(caminho_temp)
-
-            if self.ao_vivo_ativo:
-                self.janela.after(100, self.reconhecer_bloco_ao_vivo)
-
-        except Exception as erro:
-            if caminho_temp and os.path.exists(caminho_temp):
-                os.remove(caminho_temp)
-
-            print(traceback.format_exc())
-            messagebox.showerror("Erro", str(erro))
-            self.parar_ao_vivo()
 
     def reconhecer_microfone_dnn(self):
         if self.dnn_ativo:
@@ -337,41 +573,39 @@ class VozParaLibrasApp:
         )
         thread.start()
 
-
     def _reconhecer_microfone_dnn_thread(self):
         try:
             self.janela.after(0, lambda: self.status_var.set("Gravando para DNN..."))
-    
+
             caminho_audio = "audio_dnn_temp.wav"
-    
+
             gravar_audio(
                 caminho_audio,
                 DURACAO_DNN,
                 TAXA_AMOSTRAGEM
             )
-    
+
             if not self.dnn_ativo:
                 return
-    
+
             self.janela.after(0, lambda: self.status_var.set("Reconhecendo com DNN..."))
-    
+
             palavra, confianca = self.dnn_service.reconhecer(caminho_audio)
-    
+
             if not self.dnn_ativo:
                 return
-    
+
             self.janela.after(
                 0,
                 lambda: self._exibir_resultado_dnn(palavra, confianca)
             )
-    
+
         except Exception as erro:
             print(traceback.format_exc())
             self.janela.after(0, lambda: messagebox.showerror("Erro", str(erro)))
-    
+
         finally:
             self.dnn_ativo = False
-
 
     def _exibir_resultado_dnn(self, palavra, confianca):
         self.texto_normal.delete("1.0", tk.END)
@@ -389,26 +623,21 @@ class VozParaLibrasApp:
         self.resultado_var.set("")
         self.status_var.set("Texto limpo.")
 
-    def executar(self):
-        self.janela.mainloop()
-        
     def atualizar_estado_dnn(self):
         if self.dnn_service.modelo_disponivel():
-            self.botao_dnn.config(state="normal")
+            self.botao_dnn.configure(state="normal")
             self.resultado_var.set("Modelo DNN disponível.")
         else:
-            self.botao_dnn.config(state="disabled")
+            self.botao_dnn.configure(state="disabled")
             self.resultado_var.set("Modelo DNN não encontrado. Treine a DNN primeiro.")
 
-
     def treinar_dnn(self):
-        self.botao_treinar_dnn.config(state="disabled")
-        self.botao_dnn.config(state="disabled")
+        self.botao_treinar_dnn.configure(state="disabled")
+        self.botao_dnn.configure(state="disabled")
         self.status_var.set("Treinando DNN... Isso pode demorar.")
 
         thread = threading.Thread(target=self._treinar_dnn_thread, daemon=True)
         thread.start()
-
 
     def _treinar_dnn_thread(self):
         try:
@@ -426,7 +655,6 @@ class VozParaLibrasApp:
                 return
 
             self.dnn_service.carregar_modelo()
-
             self.janela.after(0, self._finalizar_treino_dnn)
 
         except Exception as erro:
@@ -436,9 +664,27 @@ class VozParaLibrasApp:
                 lambda: messagebox.showerror("Erro", str(erro))
             )
 
-
     def _finalizar_treino_dnn(self):
-        self.botao_treinar_dnn.config(state="normal")
-        self.botao_dnn.config(state="normal")
+        self.botao_treinar_dnn.configure(state="normal")
+        self.botao_dnn.configure(state="normal")
         self.status_var.set("Treinamento da DNN finalizado.")
         self.resultado_var.set("Modelo DNN treinado e carregado.")
+
+    def definir_icone_janela(self):
+        try:
+            base = os.path.dirname(os.path.abspath(__file__))
+
+            caminho_ico = os.path.join(base, "icons", "logo.ico")
+            caminho_png = os.path.join(base, "icons", "logo.png")
+
+            if os.path.exists(caminho_ico):
+                self.janela.iconbitmap(caminho_ico)
+            else:
+                self.icone_janela = tk.PhotoImage(file=caminho_png)
+                self.janela.iconphoto(False, self.icone_janela)
+
+        except Exception as e:
+            print("Erro ao carregar ícone:", e)
+
+    def executar(self):
+        self.janela.mainloop()

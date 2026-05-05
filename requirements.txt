@@ -11,3 +11,6 @@ librosa
 scikit-learn
 joblib
 numpy
+
+customtkinter
+pillow
