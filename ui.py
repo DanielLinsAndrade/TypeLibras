@@ -52,6 +52,7 @@ class VozParaLibrasApp:
     def criar_variaveis(self):
         self.status_var = tk.StringVar(value="aguardando ação...")
         self.resultado_var = tk.StringVar(value="")
+        self.modelo_whisper_var = tk.StringVar(value=MODELO_WHISPER)
 
     def carregar_icone(self, nome, tamanho=(30, 30)):
         caminho_base = os.path.dirname(os.path.abspath(__file__))
@@ -142,6 +143,51 @@ class VozParaLibrasApp:
             anchor="w"
         )
         subtitulo.pack(anchor="w", pady=(8, 0))
+
+    def trocar_modelo_whisper(self, novo_modelo):
+        if self.ao_vivo_ativo or self.dnn_ativo:
+            messagebox.showwarning(
+                "Reconhecimento em andamento",
+                "Pare o reconhecimento antes de trocar o modelo."
+            )
+            self.modelo_whisper_var.set(self.whisper_service.nome_modelo)
+            return
+
+        if novo_modelo == self.whisper_service.nome_modelo:
+            return
+
+        self.combo_modelo_whisper.configure(state="disabled")
+        self.status_var.set(f"Carregando modelo Whisper: {novo_modelo}...")
+
+        thread = threading.Thread(
+            target=self._trocar_modelo_whisper_thread,
+            args=(novo_modelo,),
+            daemon=True
+        )
+        thread.start()
+
+
+    def _trocar_modelo_whisper_thread(self, novo_modelo):
+        try:
+            self.whisper_service.carregar_modelo(novo_modelo)
+
+            self.janela.after(
+                0,
+                lambda: self._finalizar_troca_modelo_whisper(novo_modelo)
+            )
+
+        except Exception as erro:
+            print(traceback.format_exc())
+            self.janela.after(0, lambda: self.combo_modelo_whisper.configure(state="normal"))
+            self.janela.after(0, lambda: messagebox.showerror("Erro", str(erro)))
+
+
+    def _finalizar_troca_modelo_whisper(self, novo_modelo):
+        self.modelo_whisper_var.set(novo_modelo)
+        self.combo_modelo_whisper.configure(state="normal")
+        self.status_var.set(f"Modelo Whisper carregado: {novo_modelo}")
+        self.resultado_var.set("Modelo Whisper atualizado com sucesso.")
+
 
     def criar_area_acoes(self):
         card_acoes = ctk.CTkFrame(
@@ -440,12 +486,25 @@ class VozParaLibrasApp:
             text_color=self.cor_texto
         ).pack(side="left")
 
-        ctk.CTkLabel(
+        self.combo_modelo_whisper = ctk.CTkComboBox(
             item1,
-            text=f"  {MODELO_WHISPER}",
+            values=["tiny", "base", "small", "medium"],
+            variable=self.modelo_whisper_var,
+            width=95,
+            height=28,
             font=("Segoe UI", 12, "bold"),
-            text_color=self.cor_destaque
-        ).pack(side="left")
+            dropdown_font=("Segoe UI", 12),
+            fg_color=self.cor_card_2,
+            border_width=0,
+            button_color=self.cor_card_2,
+            button_hover_color=self.cor_botao_hover,
+            text_color=self.cor_destaque,
+            dropdown_fg_color=self.cor_card_2,
+            dropdown_hover_color=self.cor_botao_hover,
+            dropdown_text_color=self.cor_texto,
+            command=self.trocar_modelo_whisper
+        )
+        self.combo_modelo_whisper.pack(side="left", padx=(8, 0))
 
         item2 = ctk.CTkFrame(footer, fg_color="transparent")
         item2.grid(row=0, column=1, sticky="n", padx=24, pady=10)

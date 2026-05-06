@@ -1,6 +1,6 @@
 PASTA_DATASET = "dataset"
 
-MODELO_WHISPER = "base"
+MODELO_WHISPER = "small"
 
 DURACAO_BLOCO = 4
 DURACAO_DNN = 2
