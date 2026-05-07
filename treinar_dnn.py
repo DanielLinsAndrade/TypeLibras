@@ -80,7 +80,7 @@ def extrair_mfcc(caminho_audio):
 
 
 # Lista de características extraídas dos áudios
-X = []
+x_dados = []
 
 # Lista de rótulos correspondentes às classes
 y = []
@@ -110,13 +110,13 @@ for classe in os.listdir(DATASET_DIR):
             caracteristicas = extrair_mfcc(caminho)
 
             # Adiciona as características à lista de entrada
-            X.append(caracteristicas)
+            x_dados.append(caracteristicas)
 
             # Adiciona o nome da classe à lista de rótulos
             y.append(classe)
 
 # Converte as listas para arrays NumPy
-X = np.array(X)
+x_dados = np.array(x_dados)
 y = np.array(y)
 
 # Cria o codificador de rótulos
@@ -132,7 +132,7 @@ y_categorical = to_categorical(y_encoded)
 scaler = StandardScaler()
 
 # Normaliza as características extraídas
-X_scaled = scaler.fit_transform(X)
+X_scaled = scaler.fit_transform(x_dados)
 
 # Divide os dados em treino e teste
 X_train, X_test, y_train, y_test = train_test_split(
