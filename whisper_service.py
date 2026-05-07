@@ -21,8 +21,8 @@ class WhisperService:
         """
         Inicializa o serviço Whisper.
 
-        Parameters
-        ----------
+        Parâmetros
+        
         nome_modelo : str, optional
             Nome do modelo Whisper que será carregado.
         """
@@ -37,8 +37,8 @@ class WhisperService:
         """
         Carrega um novo modelo Whisper.
 
-        Parameters
-        ----------
+        Parâmetros
+        
         nome_modelo : str
             Nome do modelo Whisper que será carregado.
         """
