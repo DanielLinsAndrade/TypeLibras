@@ -474,6 +474,8 @@ class VozParaLibrasApp:
             )
 
         except Exception as erro: # pylint: disable=broad-exception-caught
+            mensagem_erro = str(erro)
+            
             # Exibe o traceback completo no terminal
             print(traceback.format_exc())
 
@@ -490,7 +492,7 @@ class VozParaLibrasApp:
                 0,
                 lambda: messagebox.showerror(
                     "Erro",
-                    str(erro)
+                    mensagem_erro
                 )
             )
 
@@ -1668,6 +1670,7 @@ class VozParaLibrasApp:
             )
 
         except Exception as erro: # pylint: disable=broad-exception-caught
+            mensagem_erro = str(erro)
             # Exibe o traceback completo no terminal
             print(traceback.format_exc())
 
@@ -1676,7 +1679,7 @@ class VozParaLibrasApp:
                 0,
                 lambda: messagebox.showerror(
                     "Erro",
-                    str(erro)
+                    mensagem_erro
                 )
             )
 
@@ -1880,6 +1883,7 @@ class VozParaLibrasApp:
             )
 
         except Exception as erro: # pylint: disable=broad-exception-caught
+            mensagem_erro = str(erro)
             # Exibe o traceback completo no terminal
             print(traceback.format_exc())
 
@@ -1888,7 +1892,7 @@ class VozParaLibrasApp:
                 0,
                 lambda: messagebox.showerror(
                     "Erro",
-                    str(erro)
+                    mensagem_erro
                 )
             )
 
