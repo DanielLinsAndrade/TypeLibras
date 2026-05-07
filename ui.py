@@ -75,6 +75,25 @@ class VozParaLibrasApp:
         carrega ícones e cria os componentes da interface gráfica.
         """
 
+        # Inicializando previamente os ícones para carregar posteriormente
+        self.botao_tema = None
+        self.botao_dnn = None
+        self.botao_treinar_dnn = None
+        self.texto_normal = None
+        self.texto_visual = None
+        self.combo_modelo_whisper = None
+        self.cor_fundo = None
+        self.cor_card = None
+        self.cor_card_2 = None
+        self.cor_borda = None
+        self.cor_texto = None
+        self.cor_texto_secundario = None
+        self.cor_destaque = None
+        self.cor_campo_texto = None
+        self.cor_botao_base = None
+        self.cor_botao_hover = None
+        self.cor_texto_botao = None
+
         # Define o tema inicial da interface como escuro
         ctk.set_appearance_mode("dark")
 
@@ -118,25 +137,6 @@ class VozParaLibrasApp:
 
         # Controla o estado de reconhecimento da DNN
         self.dnn_ativo = False
-
-        # Inicializando previamente os ícones para carregar posteriormente
-        self.botao_tema = None
-        self.botao_dnn = None
-        self.botao_treinar_dnn = None
-        self.texto_normal = None
-        self.texto_visual = None
-        self.combo_modelo_whisper = None
-        self.cor_fundo = None
-        self.cor_card = None
-        self.cor_card_2 = None
-        self.cor_borda = None
-        self.cor_texto = None
-        self.cor_texto_secundario = None
-        self.cor_destaque = None
-        self.cor_campo_texto = None
-        self.cor_botao_base = None
-        self.cor_botao_hover = None
-        self.cor_texto_botao = None
 
         # Carrega os ícones utilizados na interface
         self.carregar_icones()
