@@ -1172,6 +1172,7 @@ class VozParaLibrasApp:
             item1,
             values=["tiny", "base", "small", "medium"],
             variable=self.modelo_whisper_var,
+            state="readonly",
             width=95,
             height=28,
             font=(FONTE_PADRAO, 12, "bold"),
