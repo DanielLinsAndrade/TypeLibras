@@ -55,6 +55,8 @@ from dnn_service import DNNService
 # Importa função de avaliação de transcrição
 from evaluation import comparar_com_transcricao
 
+# Macro de fonte padrão para evitar repetição no código
+FONTE_PADRAO = "Segoe UI"
 
 class VozParaLibrasApp:
     """
@@ -116,6 +118,25 @@ class VozParaLibrasApp:
 
         # Controla o estado de reconhecimento da DNN
         self.dnn_ativo = False
+
+        # Inicializando previamente os ícones para carregar posteriormente
+        self.botao_tema = None
+        self.botao_dnn = None
+        self.botao_treinar_dnn = None
+        self.texto_normal = None
+        self.texto_visual = None
+        self.combo_modelo_whisper = None
+        self.cor_fundo = None
+        self.cor_card = None
+        self.cor_card_2 = None
+        self.cor_borda = None
+        self.cor_texto = None
+        self.cor_texto_secundario = None
+        self.cor_destaque = None
+        self.cor_campo_texto = None
+        self.cor_botao_base = None
+        self.cor_botao_hover = None
+        self.cor_texto_botao = None
 
         # Carrega os ícones utilizados na interface
         self.carregar_icones()
@@ -338,7 +359,7 @@ class VozParaLibrasApp:
         titulo = ctk.CTkLabel(
             textos,
             text="Conversor de Voz para Libras Escrita",
-            font=("Segoe UI", 34, "bold"),
+            font=(FONTE_PADRAO, 34, "bold"),
             text_color=self.cor_texto,
             anchor="w"
         )
@@ -350,7 +371,7 @@ class VozParaLibrasApp:
         self.botao_tema = ctk.CTkButton(
             header,
             text="Modo claro",
-            font=("Segoe UI", 13, "bold"),
+            font=(FONTE_PADRAO, 13, "bold"),
             fg_color="#182538",
             hover_color="#22324a",
             border_width=1,
@@ -374,7 +395,7 @@ class VozParaLibrasApp:
                 "Reconhecimento de fala com Whisper e DNN "
                 "para representação visual em Libras"
             ),
-            font=("Segoe UI", 17),
+            font=(FONTE_PADRAO, 17),
             text_color=self.cor_texto_secundario,
             anchor="w"
         )
@@ -452,7 +473,7 @@ class VozParaLibrasApp:
                 )
             )
 
-        except Exception as erro:
+        except Exception as erro: # pylint: disable=broad-exception-caught
             # Exibe o traceback completo no terminal
             print(traceback.format_exc())
 
@@ -527,7 +548,7 @@ class VozParaLibrasApp:
         titulo_acoes = ctk.CTkLabel(
             card_acoes,
             text="⚡ Ações",
-            font=("Segoe UI", 18, "bold"),
+            font=(FONTE_PADRAO, 18, "bold"),
             text_color=self.cor_destaque
         )
 
@@ -747,7 +768,7 @@ class VozParaLibrasApp:
             text=texto,
             image=icone,
             compound="left",
-            font=("Segoe UI", 15, "bold"),
+            font=(FONTE_PADRAO, 15, "bold"),
             text_color=self.cor_texto_botao,
             fg_color=cor_fundo_suave,
             hover_color=cor_hover,
@@ -868,7 +889,7 @@ class VozParaLibrasApp:
         bolinha = ctk.CTkLabel(
             linha,
             text="●",
-            font=("Segoe UI", 24),
+            font=(FONTE_PADRAO, 24),
             text_color=self.cor_destaque
         )
 
@@ -879,7 +900,7 @@ class VozParaLibrasApp:
         label_status = ctk.CTkLabel(
             linha,
             text="Status:",
-            font=("Segoe UI", 16, "bold"),
+            font=(FONTE_PADRAO, 16, "bold"),
             text_color=self.cor_destaque
         )
 
@@ -890,7 +911,7 @@ class VozParaLibrasApp:
         valor_status = ctk.CTkLabel(
             linha,
             textvariable=self.status_var,
-            font=("Segoe UI", 16),
+            font=(FONTE_PADRAO, 16),
             text_color=self.cor_texto
         )
 
@@ -901,7 +922,7 @@ class VozParaLibrasApp:
         valor_resultado = ctk.CTkLabel(
             linha,
             textvariable=self.resultado_var,
-            font=("Segoe UI", 13),
+            font=(FONTE_PADRAO, 13),
             text_color=self.cor_texto_secundario
         )
 
@@ -948,7 +969,7 @@ class VozParaLibrasApp:
         # Cria a caixa de texto do reconhecimento
         self.texto_normal = ctk.CTkTextbox(
             card_texto,
-            font=("Segoe UI", 15),
+            font=(FONTE_PADRAO, 15),
             text_color=self.cor_texto,
             fg_color=self.cor_campo_texto,
             border_width=1,
@@ -1076,7 +1097,7 @@ class VozParaLibrasApp:
         ctk.CTkLabel(
             header,
             text=titulo,
-            font=("Segoe UI", 18, "bold"),
+            font=(FONTE_PADRAO, 18, "bold"),
             text_color=self.cor_texto
         ).pack(side="left")
 
@@ -1142,7 +1163,7 @@ class VozParaLibrasApp:
         ctk.CTkLabel(
             item1,
             text="Modelo Whisper:",
-            font=("Segoe UI", 12),
+            font=(FONTE_PADRAO, 12),
             text_color=self.cor_texto
         ).pack(side="left")
 
@@ -1153,8 +1174,8 @@ class VozParaLibrasApp:
             variable=self.modelo_whisper_var,
             width=95,
             height=28,
-            font=("Segoe UI", 12, "bold"),
-            dropdown_font=("Segoe UI", 12),
+            font=(FONTE_PADRAO, 12, "bold"),
+            dropdown_font=(FONTE_PADRAO, 12),
             fg_color=self.cor_card_2,
             border_width=0,
             button_color=self.cor_card_2,
@@ -1198,7 +1219,7 @@ class VozParaLibrasApp:
         ctk.CTkLabel(
             item2,
             text="Duração do bloco:",
-            font=("Segoe UI", 14),
+            font=(FONTE_PADRAO, 14),
             text_color=self.cor_texto
         ).pack(side="left")
 
@@ -1206,7 +1227,7 @@ class VozParaLibrasApp:
         ctk.CTkLabel(
             item2,
             text=f"  {DURACAO_BLOCO} segundos",
-            font=("Segoe UI", 14, "bold"),
+            font=(FONTE_PADRAO, 14, "bold"),
             text_color=self.cor_destaque
         ).pack(side="left")
 
@@ -1229,7 +1250,7 @@ class VozParaLibrasApp:
         ctk.CTkLabel(
             item3,
             text="↗",
-            font=("Segoe UI", 18, "bold"),
+            font=(FONTE_PADRAO, 18, "bold"),
             text_color=self.cor_destaque
         ).pack(side="left", padx=(0, 10))
 
@@ -1237,7 +1258,7 @@ class VozParaLibrasApp:
         ctk.CTkLabel(
             item3,
             text="Sistema pronto",
-            font=("Segoe UI", 14, "bold"),
+            font=(FONTE_PADRAO, 14, "bold"),
             text_color=self.cor_destaque
         ).pack(side="left")
 
@@ -1365,7 +1386,7 @@ class VozParaLibrasApp:
                 "Reconhecimento finalizado."
             )
 
-        except Exception as erro:
+        except Exception as erro: # pylint: disable=broad-exception-caught
             # Exibe o traceback completo no terminal
             print(traceback.format_exc())
 
@@ -1486,7 +1507,7 @@ class VozParaLibrasApp:
                         )
                     )
 
-            except Exception:
+            except Exception: # pylint: disable=broad-exception-caught
                 # Exibe o traceback completo no terminal
                 print(traceback.format_exc())
 
@@ -1645,7 +1666,7 @@ class VozParaLibrasApp:
                 )
             )
 
-        except Exception as erro:
+        except Exception as erro: # pylint: disable=broad-exception-caught
             # Exibe o traceback completo no terminal
             print(traceback.format_exc())
 
@@ -1832,7 +1853,8 @@ class VozParaLibrasApp:
             resultado = subprocess.run(
                 [sys.executable, "treinar_dnn.py"],
                 capture_output=True,
-                text=True
+                text=True,
+                check=False
             )
 
             # Verifica se ocorreu erro no treinamento
@@ -1856,7 +1878,7 @@ class VozParaLibrasApp:
                 self._finalizar_treino_dnn
             )
 
-        except Exception as erro:
+        except Exception as erro: # pylint: disable=broad-exception-caught
             # Exibe o traceback completo no terminal
             print(traceback.format_exc())
 
@@ -1930,7 +1952,7 @@ class VozParaLibrasApp:
                     self.icone_janela
                 )
 
-        except Exception as erro:
+        except Exception as erro: # pylint: disable=broad-exception-caught
             # Exibe erro de carregamento do ícone
             print(
                 "Erro ao carregar ícone:",
