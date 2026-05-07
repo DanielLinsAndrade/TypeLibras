@@ -151,37 +151,7 @@ O reconhecimento principal de fala utiliza o modelo Whisper da OpenAI:
 
 ## Como Executar o Projeto
 
-### 1. Clonar o repositório
-~~~
-git clone https://github.com/DanielLinsAndrade/TypeLibras.git
-~~~
-~~~
-cd TypeLibras
-~~~
-### 2. Criar ambiente virtual
-~~~
-python -m venv venv
-~~~
-~~~
-venv\Scripts\activate
-~~~
-### 3. Instalar dependências
-~~~
-pip install -r requirements.txt
-~~~
-### 4. Executar aplicação
-~~~
-python app.py
-~~~
----
-
-## Observações Importantes
-
-- Os datasets e modelos treinados não estão versionados no repositório por questões de tamanho.
-- O modelo DNN possui limitações devido ao tamanho e natureza do dataset.
-- É necessário possuir o FFmpeg instalado e configurado no sistema.
-
-### Instalação e Configuração do FFmpeg
+### 1. Instalação e Configuração do FFmpeg
 
 O projeto utiliza o FFmpeg para processamento de áudio. É necessário que ele esteja instalado e configurado corretamente no sistema para que o reconhecimento de fala funcione.
 
@@ -218,6 +188,36 @@ C:\ffmpeg\bin\ffmpeg.exe
 - Confirme todas as janelas
 
 6. Reinicie o terminal ou o VS Code
+
+### 2. Clonar o repositório
+~~~
+git clone https://github.com/DanielLinsAndrade/TypeLibras.git
+~~~
+~~~
+cd TypeLibras
+~~~
+### 3. Criar ambiente virtual
+~~~
+python -m venv venv
+~~~
+~~~
+venv\Scripts\activate
+~~~
+### 4. Instalar dependências
+~~~
+pip install -r requirements.txt
+~~~
+### 5. Executar aplicação
+~~~
+python app.py
+~~~
+---
+
+## Observações Importantes
+
+- Os datasets e modelos treinados não estão versionados no repositório por questões de tamanho.
+- O modelo DNN possui limitações devido ao tamanho e natureza do dataset.
+- É necessário possuir o FFmpeg instalado e configurado no sistema.
 
 ---
 
