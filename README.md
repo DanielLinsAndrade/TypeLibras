@@ -1,5 +1,8 @@
 # TypeLibras
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DanielLinsAndrade_TypeLibras&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=DanielLinsAndrade_TypeLibras)
+![Python](https://img.shields.io/badge/Python-3.13-blue)
+![License](https://img.shields.io/badge/License-MIT-green)
 
 ## Descrição
 
